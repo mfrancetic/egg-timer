@@ -45,11 +45,11 @@
         tools:text="0:30" />
 
     <Button
-        android:id="@+id/stop_button"
+        android:id="@+id/start_stop_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/stop"
-        android:onClick="stopTimer"
+        android:onClick="startStopAlarm"
         app:layout_constraintEnd_toEndOf="@id/eggImageView"
         app:layout_constraintStart_toStartOf="@id/eggImageView"
         app:layout_constraintTop_toBottomOf="@id/timerTextView" />

@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -17,13 +18,13 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView timerTextView;
 
-    private Button stopButton;
+    private Button startStopButton;
 
     private long minTime = 1000;
 
     private int startingPosition = 5;
 
-    private String defaultTime = "0:30";
+    private String defaultTime = "00:30";
 
     private CountDownTimer timer;
 
@@ -41,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
 
     private int timerIntervalMinimum = 5100;
 
-    private String noTimeRemaining = "0:00";
+    private String noTimeRemaining = "00:00";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,15 +50,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mediaPlayer = MediaPlayer.create(this, R.raw.alarm);
+        mediaPlayer.setVolume(0, 0);
         timerIsRunning = false;
 
         timerSeekBar = findViewById(R.id.timerSeekBar);
         timerTextView = findViewById(R.id.timerTextView);
-        stopButton = findViewById(R.id.stop_button);
+        startStopButton = findViewById(R.id.start_stop_button);
 
         timerSeekBar.setProgress(startingPosition);
-        timerSeekBar.setMax((maxTimerInterval-minTimerInterval)/timerInterval);
+        timerSeekBar.setMax((maxTimerInterval - minTimerInterval) / timerInterval);
         timerTextView.setText(defaultTime);
+        startStopButton.setText(getString(R.string.start));
 
         timerSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -79,14 +82,23 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void stopTimer(View view) {
-        timerTextView.setText(defaultTime);
-        timerSeekBar.setProgress(startingPosition);
-        mediaPlayer.stop();
-        timer.cancel();
+    public void startStopAlarm(View view) {
+        if (timerIsRunning) {
+            timerTextView.setText(defaultTime);
+            timerSeekBar.setProgress(startingPosition);
+            mediaPlayer.stop();
+            startStopButton.setText(getString(R.string.start));
+            timerIsRunning = false;
+            timer.cancel();
+        } else {
+            startStopButton.setText(getString(R.string.stop));
+            int progress = timerSeekBar.getProgress();
+            updateAlarm(progress * timerIntervalMilliseconds + timerIntervalMinimum);
+        }
     }
 
     public void updateAlarm(long progress) {
+        startStopButton.setText(getString(R.string.stop));
         timer = new CountDownTimer(progress, minTime) {
             @Override
             public void onTick(long millisecondsUntilDone) {
@@ -105,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
                 timerSeekBar.setProgress(startingPosition);
                 timer.cancel();
                 timerIsRunning = false;
+                startStopButton.setText(getString(R.string.start));
                 mediaPlayer.start();
             }
         }.start();
