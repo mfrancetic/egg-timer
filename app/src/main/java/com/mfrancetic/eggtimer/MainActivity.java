@@ -10,8 +10,6 @@ import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import java.util.Locale;
-
 public class MainActivity extends AppCompatActivity {
 
     private SeekBar timerSeekBar;
@@ -22,9 +20,9 @@ public class MainActivity extends AppCompatActivity {
 
     private long minTime = 1000;
 
-    private int startingPosition = 5;
+    private int startingPosition = 30;
 
-    private String defaultTime = "00:30";
+    private String defaultTime = "0:30";
 
     private CountDownTimer timer;
 
@@ -32,15 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean timerIsRunning;
 
-    private int maxTimerInterval = 60;
-
-    private int minTimerInterval = 5;
-
-    private int timerInterval = 5;
-
-    private int timerIntervalMilliseconds = 5000;
-
-    private int timerIntervalMinimum = 5100;
+    private int maxTimerInterval = 600;
 
     private String noTimeRemaining = "00:00";
 
@@ -58,17 +48,15 @@ public class MainActivity extends AppCompatActivity {
         startStopButton = findViewById(R.id.start_stop_button);
 
         timerSeekBar.setProgress(startingPosition);
-        timerSeekBar.setMax((maxTimerInterval - minTimerInterval) / timerInterval);
+        timerSeekBar.setMax(maxTimerInterval);
+        timerSeekBar.setProgress(startingPosition);
         timerTextView.setText(defaultTime);
         startStopButton.setText(getString(R.string.start));
 
         timerSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                if (timerIsRunning) {
-                    timer.cancel();
-                }
-                updateAlarm(i * timerIntervalMilliseconds + timerIntervalMinimum);
+                updateTimer(i);
             }
 
             @Override
@@ -77,7 +65,6 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
             }
         });
     }
@@ -86,40 +73,45 @@ public class MainActivity extends AppCompatActivity {
         if (timerIsRunning) {
             timerTextView.setText(defaultTime);
             timerSeekBar.setProgress(startingPosition);
+            timerSeekBar.setEnabled(true);
             mediaPlayer.stop();
             startStopButton.setText(getString(R.string.start));
             timerIsRunning = false;
             timer.cancel();
         } else {
+            timerSeekBar.setEnabled(false);
             startStopButton.setText(getString(R.string.stop));
             int progress = timerSeekBar.getProgress();
-            updateAlarm(progress * timerIntervalMilliseconds + timerIntervalMinimum);
+
+            timer = new CountDownTimer(progress * 1000 + 100, minTime) {
+                @Override
+                public void onTick(long millisecondsUntilDone) {
+                    timerIsRunning = true;
+                    long millisecondsTillDoneLong = millisecondsUntilDone / 1000;
+                    updateTimer((int) millisecondsTillDoneLong);
+                }
+
+                @Override
+                public void onFinish() {
+                    timerTextView.setText(noTimeRemaining);
+                    timerSeekBar.setProgress(startingPosition);
+                    timer.cancel();
+                    timerIsRunning = false;
+                    startStopButton.setText(getString(R.string.start));
+                    mediaPlayer.start();
+                }
+            }.start();
         }
     }
 
-    public void updateAlarm(long progress) {
-        startStopButton.setText(getString(R.string.stop));
-        timer = new CountDownTimer(progress, minTime) {
-            @Override
-            public void onTick(long millisecondsUntilDone) {
-                timerIsRunning = true;
-                int seconds = (int) (millisecondsUntilDone / 1000);
-                int minutes = seconds / 60;
-                seconds = seconds % 60;
-                String timeRemaining = String.format(Locale.GERMANY, "%02d", minutes)
-                        + ":" + String.format(Locale.GERMANY, "%02d", seconds);
-                timerTextView.setText(timeRemaining);
-            }
-
-            @Override
-            public void onFinish() {
-                timerTextView.setText(noTimeRemaining);
-                timerSeekBar.setProgress(startingPosition);
-                timer.cancel();
-                timerIsRunning = false;
-                startStopButton.setText(getString(R.string.start));
-                mediaPlayer.start();
-            }
-        }.start();
+    public void updateTimer(int secondsLeft) {
+        int minutes = secondsLeft / 60;
+        int seconds = secondsLeft - (minutes * 60);
+        String secondString = Integer.toString(seconds);
+        if (seconds <= 9) {
+            secondString = "0" + secondString;
+        }
+        String timeRemaining = minutes + ":" + secondString;
+        timerTextView.setText(timeRemaining);
     }
 }
